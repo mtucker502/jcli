@@ -1,0 +1,18 @@
+[edit system]
+-  host-name vsrx1;
++  host-name vsrx1-updated;
+[edit protocols bgp group EBGP]
++   neighbor 10.0.2.1 {
++       peer-as 64514;
++       description "New upstream peer";
++   }
+[edit firewall filter PROTECT-RE term ACCEPT-BGP]
+-      from {
+-          source-address 10.0.1.0/24;
+-      }
++      from {
++          source-address {
++              10.0.1.0/24;
++              10.0.2.0/24;
++          }
++      }

@@ -1,0 +1,89 @@
+Physical interface: ge-0/0/0, Enabled, Physical link is Up
+  Interface index: 148, SNMP ifIndex: 513, Generation: 157
+  Description: Uplink to core
+  Link-level type: Ethernet, MTU: 9192, Speed: 1000mbps
+  Device flags   : Present Running
+  Interface flags: SNMP-Traps Internal: 0x4000
+  Link flags     : None
+  Current address: 00:50:56:ab:cd:01, Hardware address: 00:50:56:ab:cd:01
+  Last flapped   : 2026-01-15 08:23:41 PST (8w1d 05:36 ago)
+  Input rate     : 2456 bps (3 pps)
+  Output rate    : 1832 bps (2 pps)
+    Input errors:
+      Errors: 0, Drops: 0, Framing errors: 0, Runts: 0, Policed discards: 0,
+      L3 incompletes: 0, L2 channel errors: 0, L2 mismatch timeouts: 0,
+      FIFO errors: 0, Resource errors: 0
+    Output errors:
+      Carrier transitions: 2, Errors: 0, Drops: 47, Collisions: 0, Aged packets: 0,
+      FIFO errors: 0, HS link CRC errors: 0, MTU errors: 0, Resource errors: 0
+
+Physical interface: ge-0/0/1, Enabled, Physical link is Up
+  Interface index: 149, SNMP ifIndex: 514, Generation: 158
+  Description: Peering link A
+  Link-level type: Ethernet, MTU: 1514, Speed: 1000mbps
+  Device flags   : Present Running
+  Interface flags: SNMP-Traps Internal: 0x4000
+  Link flags     : None
+  Current address: 00:50:56:ab:cd:02, Hardware address: 00:50:56:ab:cd:02
+  Last flapped   : 2026-02-01 14:05:12 PST (5w4d 09:54 ago)
+  Input rate     : 856432 bps (742 pps)
+  Output rate    : 423108 bps (318 pps)
+    Input errors:
+      Errors: 0, Drops: 12, Framing errors: 0, Runts: 0, Policed discards: 3,
+      L3 incompletes: 0, L2 channel errors: 0, L2 mismatch timeouts: 0,
+      FIFO errors: 0, Resource errors: 0
+    Output errors:
+      Carrier transitions: 1, Errors: 0, Drops: 0, Collisions: 0, Aged packets: 0,
+      FIFO errors: 0, HS link CRC errors: 0, MTU errors: 0, Resource errors: 0
+
+Physical interface: ge-0/0/2, Enabled, Physical link is Up
+  Interface index: 150, SNMP ifIndex: 515, Generation: 159
+  Description: Peering link B
+  Link-level type: Ethernet, MTU: 1514, Speed: 1000mbps
+  Device flags   : Present Running
+  Interface flags: SNMP-Traps Internal: 0x4000
+  Link flags     : None
+  Current address: 00:50:56:ab:cd:03, Hardware address: 00:50:56:ab:cd:03
+  Last flapped   : 2026-02-28 22:17:55 PST (1w3d 01:42 ago)
+  Input rate     : 1204816 bps (1023 pps)
+  Output rate    : 678240 bps (512 pps)
+    Input errors:
+      Errors: 0, Drops: 0, Framing errors: 0, Runts: 0, Policed discards: 0,
+      L3 incompletes: 0, L2 channel errors: 0, L2 mismatch timeouts: 0,
+      FIFO errors: 0, Resource errors: 0
+    Output errors:
+      Carrier transitions: 3, Errors: 0, Drops: 231, Collisions: 0, Aged packets: 8,
+      FIFO errors: 0, HS link CRC errors: 0, MTU errors: 0, Resource errors: 0
+
+Physical interface: ge-0/0/3, Enabled, Physical link is Up
+  Interface index: 151, SNMP ifIndex: 516, Generation: 160
+  Description: Server segment
+  Link-level type: Ethernet, MTU: 1514, Speed: 1000mbps
+  Device flags   : Present Running
+  Interface flags: SNMP-Traps Internal: 0x4000
+  Link flags     : None
+  Current address: 00:50:56:ab:cd:04, Hardware address: 00:50:56:ab:cd:04
+  Last flapped   : 2026-01-10 03:45:22 PST (8w5d 20:14 ago)
+  Input rate     : 45672 bps (38 pps)
+  Output rate    : 12340 bps (9 pps)
+    Input errors:
+      Errors: 0, Drops: 0, Framing errors: 0, Runts: 0, Policed discards: 0,
+      L3 incompletes: 0, L2 channel errors: 0, L2 mismatch timeouts: 0,
+      FIFO errors: 0, Resource errors: 0
+    Output errors:
+      Carrier transitions: 1, Errors: 0, Drops: 0, Collisions: 0, Aged packets: 0,
+      FIFO errors: 0, HS link CRC errors: 0, MTU errors: 0, Resource errors: 0
+
+Physical interface: lo0, Enabled, Physical link is Up
+  Interface index: 6, SNMP ifIndex: 6, Generation: 7
+  Link-level type: Unspecified, MTU: Unlimited, Speed: Unspecified
+  Device flags   : Present Running Loopback
+  Interface flags: SNMP-Traps
+  Link flags     : None
+    Input errors:
+      Errors: 0, Drops: 0, Framing errors: 0, Runts: 0, Policed discards: 0,
+      L3 incompletes: 0, L2 channel errors: 0, L2 mismatch timeouts: 0,
+      FIFO errors: 0, Resource errors: 0
+    Output errors:
+      Carrier transitions: 0, Errors: 0, Drops: 0, Collisions: 0, Aged packets: 0,
+      FIFO errors: 0, HS link CRC errors: 0, MTU errors: 0, Resource errors: 0

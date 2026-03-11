@@ -1,0 +1,147 @@
+set version 23.4R1.10
+set system host-name vsrx1
+set system domain-name lab.example.com
+set system time-zone America/Los_Angeles
+set system authentication-order password
+set system root-authentication encrypted-password "$6$abc123xyz$LongHashedPasswordStringHere"
+set system name-server 8.8.8.8
+set system name-server 8.8.4.4
+set system syslog user * any emergency
+set system syslog file messages any notice
+set system syslog file messages authorization info
+set system syslog file interactive-commands interactive-commands any
+set system ntp server 10.0.0.254
+set system services ssh root-login allow
+set system services ssh protocol-version v2
+set system services ssh max-sessions-per-connection 32
+set system services netconf ssh
+set system services netconf rfc-compliant
+set system services web-management http interface fxp0.0
+set system login user admin class super-user
+set system login user admin authentication encrypted-password "$6$def456uvw$AnotherHashedPasswordHere"
+set system login user readonly class read-only
+set interfaces ge-0/0/0 unit 0 family inet address 10.0.0.10/24
+set interfaces ge-0/0/0 unit 0 family inet6 address 2001:db8::10/64
+set interfaces ge-0/0/0 description "Uplink to core"
+set interfaces ge-0/0/0 mtu 9192
+set interfaces ge-0/0/1 unit 0 family inet address 10.0.1.10/24
+set interfaces ge-0/0/1 description "Peering link A"
+set interfaces ge-0/0/2 unit 0 family inet address 10.0.2.10/24
+set interfaces ge-0/0/2 description "Peering link B"
+set interfaces ge-0/0/3 unit 0 family inet address 192.168.1.1/24
+set interfaces ge-0/0/3 description "Server segment"
+set interfaces lo0 unit 0 family inet address 10.255.0.1/32
+set interfaces lo0 unit 0 family inet6 address 2001:db8:ffff::1/128
+set interfaces fxp0 unit 0 family inet address 172.25.84.83/24
+set routing-options router-id 10.255.0.1
+set routing-options autonomous-system 64512
+set routing-options static route 0.0.0.0/0 next-hop 10.0.0.1
+set routing-options static route 0.0.0.0/0 no-readvertise
+set protocols bgp group IBGP type internal
+set protocols bgp group IBGP local-address 10.255.0.1
+set protocols bgp group IBGP family inet unicast
+set protocols bgp group IBGP family inet6 unicast
+set protocols bgp group IBGP neighbor 10.255.0.2 description "vsrx2"
+set protocols bgp group IBGP neighbor 10.255.0.3 description "lab3"
+set protocols bgp group IBGP export IBGP-EXPORT
+set protocols bgp group EBGP type external
+set protocols bgp group EBGP multihop ttl 2
+set protocols bgp group EBGP neighbor 10.0.1.1 peer-as 64513
+set protocols bgp group EBGP neighbor 10.0.1.1 description "ISP-A"
+set protocols bgp group EBGP neighbor 10.0.1.1 import EBGP-IMPORT
+set protocols bgp group EBGP neighbor 10.0.1.1 export EBGP-EXPORT
+set protocols bgp group EBGP neighbor 10.0.1.2 peer-as 64513
+set protocols bgp group EBGP neighbor 10.0.1.2 description "ISP-A-backup"
+set protocols bgp group EBGP neighbor 10.0.1.2 import EBGP-IMPORT
+set protocols bgp group EBGP neighbor 10.0.1.2 export EBGP-EXPORT
+set protocols ospf area 0.0.0.0 interface ge-0/0/0.0
+set protocols ospf area 0.0.0.0 interface lo0.0 passive
+set protocols ospf export OSPF-EXPORT
+set protocols lldp interface all
+set protocols lldp-med interface all
+set policy-options prefix-list BOGONS 0.0.0.0/8
+set policy-options prefix-list BOGONS 10.0.0.0/8
+set policy-options prefix-list BOGONS 100.64.0.0/10
+set policy-options prefix-list BOGONS 127.0.0.0/8
+set policy-options prefix-list BOGONS 169.254.0.0/16
+set policy-options prefix-list BOGONS 172.16.0.0/12
+set policy-options prefix-list BOGONS 192.0.0.0/24
+set policy-options prefix-list BOGONS 192.0.2.0/24
+set policy-options prefix-list BOGONS 192.168.0.0/16
+set policy-options prefix-list BOGONS 198.18.0.0/15
+set policy-options prefix-list BOGONS 198.51.100.0/24
+set policy-options prefix-list BOGONS 203.0.113.0/24
+set policy-options prefix-list BOGONS 224.0.0.0/3
+set policy-options policy-statement EBGP-IMPORT term REJECT-BOGONS from prefix-list BOGONS
+set policy-options policy-statement EBGP-IMPORT term REJECT-BOGONS then reject
+set policy-options policy-statement EBGP-IMPORT term ACCEPT-ROUTES then accept
+set policy-options policy-statement EBGP-EXPORT term ADVERTISE-LOCAL from protocol direct
+set policy-options policy-statement EBGP-EXPORT term ADVERTISE-LOCAL from route-filter 10.0.0.0/16 orlonger
+set policy-options policy-statement EBGP-EXPORT term ADVERTISE-LOCAL then accept
+set policy-options policy-statement EBGP-EXPORT term REJECT-ALL then reject
+set policy-options policy-statement IBGP-EXPORT term REDISTRIBUTE-DIRECT from protocol direct
+set policy-options policy-statement IBGP-EXPORT term REDISTRIBUTE-DIRECT then accept
+set policy-options policy-statement IBGP-EXPORT term REDISTRIBUTE-STATIC from protocol static
+set policy-options policy-statement IBGP-EXPORT term REDISTRIBUTE-STATIC then accept
+set policy-options policy-statement OSPF-EXPORT term REDISTRIBUTE-DIRECT from protocol direct
+set policy-options policy-statement OSPF-EXPORT term REDISTRIBUTE-DIRECT from route-filter 10.0.0.0/16 orlonger
+set policy-options policy-statement OSPF-EXPORT term REDISTRIBUTE-DIRECT then accept
+set policy-options community BGP-CUSTOMER members 64512:100
+set policy-options community BGP-PEER members 64512:200
+set policy-options community BGP-TRANSIT members 64512:300
+set firewall family inet filter PROTECT-RE term ACCEPT-SSH from source-prefix-list MGMT-NETS
+set firewall family inet filter PROTECT-RE term ACCEPT-SSH from protocol tcp
+set firewall family inet filter PROTECT-RE term ACCEPT-SSH from destination-port ssh
+set firewall family inet filter PROTECT-RE term ACCEPT-SSH then accept
+set firewall family inet filter PROTECT-RE term ACCEPT-BGP from source-address 10.0.1.0/24
+set firewall family inet filter PROTECT-RE term ACCEPT-BGP from protocol tcp
+set firewall family inet filter PROTECT-RE term ACCEPT-BGP from destination-port bgp
+set firewall family inet filter PROTECT-RE term ACCEPT-BGP then accept
+set firewall family inet filter PROTECT-RE term ACCEPT-OSPF from protocol ospf
+set firewall family inet filter PROTECT-RE term ACCEPT-OSPF then accept
+set firewall family inet filter PROTECT-RE term ACCEPT-ICMP from protocol icmp
+set firewall family inet filter PROTECT-RE term ACCEPT-ICMP from icmp-type echo-request
+set firewall family inet filter PROTECT-RE term ACCEPT-ICMP then policer ICMP-POLICER
+set firewall family inet filter PROTECT-RE term ACCEPT-ICMP then accept
+set firewall family inet filter PROTECT-RE term ACCEPT-NTP from source-prefix-list NTP-SERVERS
+set firewall family inet filter PROTECT-RE term ACCEPT-NTP from protocol udp
+set firewall family inet filter PROTECT-RE term ACCEPT-NTP from destination-port ntp
+set firewall family inet filter PROTECT-RE term ACCEPT-NTP then accept
+set firewall family inet filter PROTECT-RE term ACCEPT-NETCONF from source-prefix-list MGMT-NETS
+set firewall family inet filter PROTECT-RE term ACCEPT-NETCONF from protocol tcp
+set firewall family inet filter PROTECT-RE term ACCEPT-NETCONF from destination-port 830
+set firewall family inet filter PROTECT-RE term ACCEPT-NETCONF then accept
+set firewall family inet filter PROTECT-RE term ACCEPT-TRACEROUTE from protocol udp
+set firewall family inet filter PROTECT-RE term ACCEPT-TRACEROUTE from destination-port 33434-33534
+set firewall family inet filter PROTECT-RE term ACCEPT-TRACEROUTE then policer TRACEROUTE-POLICER
+set firewall family inet filter PROTECT-RE term ACCEPT-TRACEROUTE then accept
+set firewall family inet filter PROTECT-RE term DISCARD-ALL then log
+set firewall family inet filter PROTECT-RE term DISCARD-ALL then discard
+set firewall policer ICMP-POLICER if-exceeding bandwidth-limit 1m
+set firewall policer ICMP-POLICER if-exceeding burst-size-limit 15k
+set firewall policer ICMP-POLICER then discard
+set firewall policer TRACEROUTE-POLICER if-exceeding bandwidth-limit 512k
+set firewall policer TRACEROUTE-POLICER if-exceeding burst-size-limit 15k
+set firewall policer TRACEROUTE-POLICER then discard
+set prefix-list MGMT-NETS 172.25.84.0/24
+set prefix-list NTP-SERVERS 10.0.0.254/32
+set security zones security-zone trust interfaces ge-0/0/3.0 host-inbound-traffic system-services all
+set security zones security-zone untrust interfaces ge-0/0/0.0 host-inbound-traffic system-services ping
+set security zones security-zone untrust interfaces ge-0/0/0.0 host-inbound-traffic system-services ssh
+set security zones security-zone untrust interfaces ge-0/0/0.0 host-inbound-traffic system-services netconf
+set security zones security-zone untrust interfaces ge-0/0/1.0 host-inbound-traffic system-services ping
+set security zones security-zone untrust interfaces ge-0/0/2.0 host-inbound-traffic system-services ping
+set security policies from-zone trust to-zone untrust policy ALLOW-ALL match source-address any
+set security policies from-zone trust to-zone untrust policy ALLOW-ALL match destination-address any
+set security policies from-zone trust to-zone untrust policy ALLOW-ALL match application any
+set security policies from-zone trust to-zone untrust policy ALLOW-ALL then permit
+set security nat source rule-set SNAT-OUTBOUND from zone trust
+set security nat source rule-set SNAT-OUTBOUND to zone untrust
+set security nat source rule-set SNAT-OUTBOUND rule SNAT-ALL match source-address 0.0.0.0/0
+set security nat source rule-set SNAT-OUTBOUND rule SNAT-ALL then source-nat interface
+set snmp community public authorization read-only
+set snmp community public clients 172.25.84.0/24
+set snmp trap-group MONITORING targets 172.25.84.100
+set snmp trap-group MONITORING categories chassis
+set snmp trap-group MONITORING categories link
+set snmp trap-group MONITORING categories routing

@@ -1,0 +1,15 @@
+Physical interface: ge-0/0/0, Enabled, Physical link is Up
+      Errors: 0, Drops: 0, Framing errors: 0, Runts: 0, Policed discards: 0,
+      Carrier transitions: 2, Errors: 0, Drops: 47, Collisions: 0, Aged packets: 0,
+Physical interface: ge-0/0/1, Enabled, Physical link is Up
+      Errors: 0, Drops: 12, Framing errors: 0, Runts: 0, Policed discards: 3,
+      Carrier transitions: 1, Errors: 0, Drops: 0, Collisions: 0, Aged packets: 0,
+Physical interface: ge-0/0/2, Enabled, Physical link is Up
+      Errors: 0, Drops: 0, Framing errors: 0, Runts: 0, Policed discards: 0,
+      Carrier transitions: 3, Errors: 0, Drops: 231, Collisions: 0, Aged packets: 8,
+Physical interface: ge-0/0/3, Enabled, Physical link is Up
+      Errors: 0, Drops: 0, Framing errors: 0, Runts: 0, Policed discards: 0,
+      Carrier transitions: 1, Errors: 0, Drops: 0, Collisions: 0, Aged packets: 0,
+Physical interface: lo0, Enabled, Physical link is Up
+      Errors: 0, Drops: 0, Framing errors: 0, Runts: 0, Policed discards: 0,
+      Carrier transitions: 0, Errors: 0, Drops: 0, Collisions: 0, Aged packets: 0,

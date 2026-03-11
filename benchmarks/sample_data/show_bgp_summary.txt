@@ -1,0 +1,17 @@
+Threading mode: BGP I/O
+Default eBGP mode: advertise - Loss of Connectivity
+
+Groups: 2 Peers: 4 Down peers: 1
+Table          Tot Paths  Act Paths Suppressed    History Damp State    Pending
+inet.0               847        421          0          0          0          0
+inet6.0               52         26          0          0          0          0
+Peer                     AS      InPkt     OutPkt    OutQ   Flaps Last Up/Dwn State|#Active/Received/Accepted/Damped...
+10.0.0.1              64512    1234567     987654       0       2  30w4d 6:12:45 Establ
+  inet.0: 211/423/423/0
+  inet6.0: 13/26/26/0
+10.0.0.2              64512    2345678    1876543       0       1  30w4d 6:12:44 Establ
+  inet.0: 210/424/424/0
+  inet6.0: 13/26/26/0
+10.0.1.1              64513     543210     432109       0       5  2w3d 14:55:01 Establ
+  inet.0: 0/0/0/0
+10.0.1.2              64513          0          0       0       8 3d 22:10:33 Active

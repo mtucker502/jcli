@@ -1,0 +1,16 @@
+services {
+    ssh {
+        root-login allow;
+        protocol-version v2;
+        max-sessions-per-connection 32;
+    }
+    netconf {
+        ssh;
+        rfc-compliant;
+    }
+    web-management {
+        http {
+            interface fxp0.0;
+        }
+    }
+}

@@ -92,19 +92,19 @@ A shell script (`benchmarks/real_world_test.sh`) runs Claude Code (`claude -p`) 
 
 **Skill isolation:** Each run uses an isolated `CLAUDE_CONFIG_DIR`. CLI runs have no skill installed. Skill runs have SKILL.md copied into the isolated config dir's `skills/jcli/` directory. This prevents cross-contamination between approaches.
 
-**Prompt design:**
-- MCP and Skill runs use natural-language prompts (e.g., "List the available Junos routers") — the LLM discovers how to act from its tool schemas or skill context.
-- CLI runs specify exact commands (e.g., "List the available Junos routers using: jcli device list") since the LLM has no other way to know about jcli.
+**Prompt design:** All three approaches use identical natural-language prompts. MCP discovers actions from tool schemas, Skill from SKILL.md context, and CLI must figure it out from available tools and the codebase. This keeps the comparison fair — any behavioral differences come from the approach, not the prompt.
 
-**Phase 2 scenarios include the Phase 1 operations plus two composability tests:**
+**Phase 2 scenarios include the Phase 1 operations plus composability tests:**
 
-| Scenario | MCP / Skill Prompt | CLI Prompt |
-|----------|-------------------|------------|
-| List routers | "List the available Junos routers" | "List the available Junos routers using: jcli device list" |
-| Multi-op (3 tasks) | "Do these three things: 1) List all routers 2) Get facts for vsrx1 3) Run 'show version' on vsrx1" | "Do these three things using jcli commands: 1) jcli device list 2) jcli device facts vsrx1 3) jcli command run vsrx1 'show version'" |
-| Show system services | "Show me the system services configuration on vsrx1" | "Show me the system services configuration on vsrx1 using jcli" |
-| Interface drop counters | "Run 'show interfaces' on vsrx1 and tell me which interfaces have drop counters" | "Get the interface drop counters on vsrx1 using jcli command run and grep" |
-| Full workflow (4 tasks) | "Complete workflow: 1) List routers 2) Get facts for vsrx1 3) Run 'show bgp summary' on vsrx1 4) Show the full config of vsrx1" | "Complete workflow using jcli: 1) jcli device list 2) jcli device facts vsrx1 3) jcli command run vsrx1 'show bgp summary' 4) jcli config show vsrx1" |
+| Scenario | Prompt (identical for all 3 approaches) |
+|----------|------------------------------------------|
+| List routers | "List the available Junos routers" |
+| Multi-op (3 tasks) | "Do these three things: 1) List all routers 2) Get facts for vsrx1 3) Run 'show version' on vsrx1" |
+| Show system services | "Show me the system services configuration on vsrx1" |
+| Interface drop counters | "Run 'show interfaces' on vsrx1 and tell me which interfaces have drop counters" |
+| Full workflow (4 tasks) | "Complete workflow: 1) List routers 2) Get facts for vsrx1 3) Run 'show bgp summary' on vsrx1 4) Show the full config of vsrx1" |
+| BGP peer filtering | "Show BGP peers on vsrx1 and identify any not in Established state" |
+| Config audit (2 sections) | "Show just the firewall filter rules and SNMP community configuration on vsrx1" |
 
 These prompts describe intent without prescribing commands (for MCP and Skill), letting the LLM decide how to get the data. The skill hypothesis is that SKILL.md provides enough guidance for the LLM to use jcli commands correctly with natural-language prompts — combining CLI's per-token efficiency with MCP's behavioral consistency.
 
@@ -151,7 +151,7 @@ JMCP_PYTHON=/path/to/junos-mcp-server/.venv-linux/bin/python bash benchmarks/rea
 
 - `JMCP_PATH` — path to jmcp.py (default: `/Users/matucker/git/junos-mcp-server/jmcp.py`)
 - `JMCP_PYTHON` — python binary with jmcp dependencies (default: jmcp's `.venv/bin/python`)
-- `BENCHMARK_MODEL` — model to use (default: `haiku`)
+- `BENCHMARK_MODEL` — model to use (default: `opus`)
 - `BENCHMARK_RUNS` — number of runs per scenario (default: `5`)
 
 ## Caveats

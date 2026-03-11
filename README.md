@@ -2,30 +2,26 @@
 
 CLI tool for Juniper Junos device management via NETCONF/PyEZ.
 
-## Table of Contents
-
-- [jcli](#jcli)
-  - [Table of Contents](#table-of-contents)
-  - [Install](#install)
-  - [Device Inventory](#device-inventory)
-  - [Commands](#commands)
-    - [Device Management](#device-management)
-    - [Command Execution](#command-execution)
-    - [Configuration](#configuration)
-  - [Safety Blocklists](#safety-blocklists)
-  - [Installing Skills](#installing-skills)
-  - [Environment Variables](#environment-variables)
+- [Install](#install)
+- [Device Inventory](#device-inventory)
+- [Commands](#commands)
+  - [Device Management](#device-management)
+  - [Command Execution](#command-execution)
+  - [Configuration](#configuration)
+- [Safety Blocklists](#safety-blocklists)
+- [Installing Skills](#installing-skills)
+- [Environment Variables](#environment-variables)
 
 ## Install
 
 ```
-pip install .
+uv pip install git+ssh://git@github.com/mtucker502/jcli.git
 ```
 
 Or run directly:
 
 ```
-uv run jcli --help
+uvx --from git+ssh://git@github.com/mtucker502/jcli.git jcli
 ```
 
 ## Device Inventory
