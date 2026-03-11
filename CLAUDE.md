@@ -24,6 +24,7 @@ src/jcli/safety/blocklist.py   # command/config blocklist checking
 src/jcli/template/renderer.py  # Jinja2 + YAML rendering
 src/jcli/output/formatter.py   # plain text (default) and JSON output
 examples/                      # block.cmd, block.cfg examples
+skills/SKILL.md               # Claude Code skill (install via jcli --install-skill)
 ```
 
 ## Patterns

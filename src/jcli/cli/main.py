@@ -1,11 +1,47 @@
 import logging
 import os
+import shutil
 import sys
+from pathlib import Path
 
 import click
 
 from jcli import __version__
 from jcli.device.inventory import DeviceInventory
+
+
+def _install_skill(ctx, param, value):
+    if not value or ctx.resilient_parsing:
+        return
+    # parents: main.py -> cli/ -> jcli/ -> src/ -> repo root
+    src = Path(__file__).resolve().parents[3] / "skills" / "SKILL.md"
+    if not src.exists():
+        # Fall back to installed package data
+        import importlib.resources
+
+        ref = importlib.resources.files("jcli").joinpath("skills/SKILL.md")
+        src = Path(str(ref))
+    if not src.exists():
+        click.echo("Error: skill file not found.", err=True)
+        ctx.exit(1)
+    dest_dir = Path.home() / ".claude" / "skills" / "jcli"
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    dest = dest_dir / "SKILL.md"
+    shutil.copy2(src, dest)
+    click.echo(f"Installed jcli skill to {dest}")
+    ctx.exit(0)
+
+
+def _uninstall_skill(ctx, param, value):
+    if not value or ctx.resilient_parsing:
+        return
+    skill_dir = Path.home() / ".claude" / "skills" / "jcli"
+    if not skill_dir.exists():
+        click.echo("jcli skill is not installed.", err=True)
+        ctx.exit(1)
+    shutil.rmtree(skill_dir)
+    click.echo(f"Uninstalled jcli skill from {skill_dir}")
+    ctx.exit(0)
 
 
 class CliContext:
@@ -43,6 +79,22 @@ class CliContext:
     help="Default command timeout in seconds.",
 )
 @click.option("--verbose", "-v", is_flag=True, help="Enable verbose logging.")
+@click.option(
+    "--install-skill",
+    is_flag=True,
+    is_eager=True,
+    expose_value=False,
+    callback=_install_skill,
+    help="Install the jcli Claude Code skill to ~/.claude/skills/.",
+)
+@click.option(
+    "--uninstall-skill",
+    is_flag=True,
+    is_eager=True,
+    expose_value=False,
+    callback=_uninstall_skill,
+    help="Uninstall the jcli Claude Code skill from ~/.claude/skills/.",
+)
 @click.version_option(version=__version__, prog_name="jcli")
 @click.pass_context
 def cli(ctx, json_output, inventory_path, timeout, verbose):

@@ -13,6 +13,7 @@ CLI tool for Juniper Junos device management via NETCONF/PyEZ.
     - [Command Execution](#command-execution)
     - [Configuration](#configuration)
   - [Safety Blocklists](#safety-blocklists)
+  - [Installing Skills](#installing-skills)
   - [Environment Variables](#environment-variables)
 
 ## Install
@@ -98,6 +99,14 @@ cp examples/block.cmd examples/block.cfg .
 ```
 
 Or specify paths via `JCLI_BLOCK_CMD` and `JCLI_BLOCK_CFG` environment variables. If no blocklist file is found, no restrictions are applied.
+
+## Installing Skills
+
+Claude Code, GitHub Copilot and others will use the locally installed skills.
+
+```
+jcli --install-skill
+```
 
 ## Environment Variables
 
