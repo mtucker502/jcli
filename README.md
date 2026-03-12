@@ -15,10 +15,10 @@ CLI tool for Juniper Junos device management via NETCONF/PyEZ.
 ## Install
 
 ```
-uv pip install git+ssh://git@github.com/mtucker502/jcli.git
+uv tool install git+ssh://git@github.com/mtucker502/jcli.git
 ```
 
-Or run directly:
+Or run directly without installing:
 
 ```
 uvx --from git+ssh://git@github.com/mtucker502/jcli.git jcli
