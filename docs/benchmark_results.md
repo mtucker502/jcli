@@ -41,123 +41,68 @@ Per-call overhead is identical for CLI and Skill — both use the Bash tool with
 CLI Total = per-call costs only (no schema overhead). Skill Total = CLI per-call costs + 2,292 tokens for SKILL.md.
 
 In Phase 1, Skill is the most expensive approach due to SKILL.md's richer context (2,292 tokens vs MCP's 936). However, Phase 1 only measures static overhead — it cannot capture the skill's potential to reduce turn count variance, which Phase 2 measures.
-
 ## Results (Phase 2: Real-World Validation)
 
-Phase 2 ran Claude Code (`claude -p`) with Haiku against a live vsrx1 device, comparing all three approaches: jmcp via MCP, jcli via Bash (no skill), and jcli via Bash with SKILL.md installed. Each scenario was run 5 times per approach (75 total invocations). Token usage was extracted from raw JSONL session data via `CLAUDE_CONFIG_DIR` isolation.
+Phase 2 ran Claude Code (`claude -p`) with opus against a live vsrx1 device, comparing three approaches: jmcp via MCP, jcli via Bash (no skill), and jcli via Bash with the SKILL.md skill installed. Each scenario was run 20 times per approach (4-5 valid runs after filtering rate-limited/empty sessions). Token usage was extracted from raw JSONL session data via `CLAUDE_CONFIG_DIR` isolation.
 
-### Averaged results
+### Detailed statistics (min / avg / max)
 
-Context tokens = input + cache creation + cache read (total tokens the API processed per session).
+Each cell shows min / avg / max across all runs. Context = input + cache creation + cache read tokens.
 
-| Scenario | Approach | Avg Turns | Avg Context | Avg Output |
-|----------|----------|-----------|-------------|------------|
-| List routers (1 op) | MCP | 7 | 183,607 | 591 |
-| | CLI | 5 | 121,218 | 367 |
-| | Skill | 24 | 677,319 | 1,818 |
-| Multi-op (3 ops) | MCP | 8 | 213,667 | 956 |
-| | CLI | 11 | 291,515 | 1,190 |
-| | Skill | 9 | 240,162 | 1,114 |
-| Show services (1 op) | MCP | 12 | 295,395 | 1,278 |
-| | CLI | 16 | 438,736 | 1,764 |
-| | Skill | 25 | 719,575 | 2,502 |
-| Show interfaces (1 op) | MCP | 13 | 334,172 | 1,284 |
-| | CLI | 10 | 257,771 | 1,173 |
-| | Skill | 7 | 186,776 | 1,119 |
-| Full workflow (4 ops) | MCP | 15 | 375,341 | 1,642 |
-| | CLI | 18 | 456,961 | 1,831 |
-| | Skill | 20 | 567,279 | 2,188 |
+| Scenario | Approach | Turns | Context | Output |
+|----------|----------|-------|---------|--------|
+| List routers (1 op) | MCP | 5 / 5 / 6 | 44,591 / 52,550 / 64,481 | 322 / 377 / 451 |
+|  | CLI | 5 / 5 / 5 | 62,595 / 62,600 / 62,624 | 291 / 335 / 356 |
+|  | Skill | 5 / 5 / 5 | 56,682 / 58,579 / 66,143 | 285 / 314 / 363 |
+| Multi-op (3 ops) | MCP | 6 / 7 / 8 | 44,045 / 92,452 / 104,560 | 541 / 631 / 659 |
+|  | CLI | 7 / 7 / 7 | 98,788 / 98,832 / 98,854 | 429 / 589 / 646 |
+|  | Skill | 7 / 7 / 8 | 98,879 / 101,155 / 104,583 | 577 / 622 / 685 |
+| Show services (1 op) | MCP | 4 / 5 / 8 | 45,492 / 69,722 / 102,947 | 452 / 543 / 620 |
+|  | CLI | 4 / 5 / 6 | 45,522 / 69,984 / 80,497 | 443 / 590 / 652 |
+|  | Skill | 5 / 5 / 7 | 66,301 / 73,742 / 103,262 | 353 / 497 / 651 |
+| Show interfaces (1 op) | MCP | 3 / 5 / 6 | 28,011 / 57,168 / 68,504 | 473 / 652 / 716 |
+|  | CLI | 5 / 6 / 8 | 68,545 / 98,661 / 125,870 | 646 / 834 / 1,025 |
+|  | Skill | 5 / 5 / 6 | 70,005 / 74,282 / 90,782 | 581 / 667 / 839 |
+| Full workflow (4 ops) | MCP | 9 / 11 / 14 | 123,906 / 136,809 / 156,347 | 844 / 1,167 / 1,520 |
+|  | CLI | 9 / 9 / 10 | 123,911 / 138,727 / 143,774 | 1,080 / 1,121 / 1,178 |
+|  | Skill | 9 / 9 / 9 | 123,954 / 124,024 / 124,050 | 628 / 993 / 1,158 |
+| BGP peer filtering (1 op) | MCP | 4 / 5 / 7 | 30,816 / 69,553 / 98,158 | 518 / 730 / 861 |
+|  | CLI | 5 / 6 / 8 | 64,671 / 96,947 / 120,151 | 597 / 746 / 1,024 |
+|  | Skill | 5 / 7 / 9 | 64,099 / 113,635 / 140,806 | 668 / 821 / 992 |
+| Config audit (2 ops) | MCP | 11 / 13 / 19 | 129,138 / 214,087 / 327,803 | 848 / 1,369 / 1,925 |
+|  | CLI | 10 / 11 / 12 | 150,534 / 176,634 / 192,836 | 916 / 1,110 / 1,330 |
+|  | Skill | 9 / 11 / 14 | 132,321 / 174,417 / 226,056 | 773 / 895 / 1,164 |
+| Multi-command (3 ops) | MCP | 7 / 7 / 9 | 99,105 / 108,124 / 131,915 | 741 / 826 / 882 |
+|  | CLI | 7 / 7 / 10 | 108,382 / 122,127 / 163,037 | 635 / 715 / 849 |
+|  | Skill | 7 / 7 / 7 | 90,422 / 98,564 / 101,279 | 537 / 682 / 772 |
+| Targeted config (1 op) | MCP | 3 / 3 / 5 | 25,176 / 33,703 / 53,699 | 295 / 413 / 529 |
+|  | CLI | 4 / 5 / 7 | 45,511 / 67,533 / 98,546 | 435 / 673 / 938 |
+|  | Skill | 4 / 5 / 6 | 45,613 / 65,183 / 82,430 | 467 / 594 / 733 |
 
 ### Context comparison
 
 | Scenario | MCP Context | CLI Context | CLI vs MCP | Skill Context | Skill vs MCP |
-|----------|-------------|-------------|------------|---------------|--------------|
-| List routers (1 op) | 183,607 | 121,218 | **-34.0%** | 677,319 | **+268.9%** |
-| Multi-op (3 ops) | 213,667 | 291,515 | **+36.4%** | 240,162 | **+12.4%** |
-| Show services (1 op) | 295,395 | 438,736 | **+48.5%** | 719,575 | **+143.6%** |
-| Show interfaces (1 op) | 334,172 | 257,771 | **-22.9%** | 186,776 | **-44.1%** |
-| Full workflow (4 ops) | 375,341 | 456,961 | **+21.7%** | 567,279 | **+51.1%** |
-
-### Per-run variance
-
-The averages mask significant run-to-run variance. The ranges below show how much individual runs deviated.
-
-| Scenario | Approach | Turn Range | Context Range |
-|----------|----------|------------|---------------|
-| List routers (1 op) | MCP | 4-12 | 92,864 - 283,504 |
-| | CLI | 4-10 | 92,770 - 234,954 |
-| | Skill | 4-46 | 93,528 - 1,329,190 |
-| Multi-op (3 ops) | MCP | 5-18 | 120,732 - 443,000 |
-| | CLI | 4-29 | 97,378 - 735,467 |
-| | Skill | 6-24 | 144,154 - 588,866 |
-| Show services (1 op) | MCP | 4-22 | 93,390 - 570,924 |
-| | CLI | 10-34 | 239,694 - 960,881 |
-| | Skill | 14-44 | 368,552 - 1,341,940 |
-| Show interfaces (1 op) | MCP | 4-26 | 99,048 - 669,816 |
-| | CLI | 6-16 | 140,672 - 383,877 |
-| | Skill | 4-10 | 99,134 - 263,132 |
-| Full workflow (4 ops) | MCP | 11-24 | 267,120 - 627,232 |
-| | CLI | 12-24 | 292,942 - 599,781 |
-| | Skill | 11-33 | 271,009 - 860,894 |
+|----------|-------------|-------------|------------|-------------|------------|
+| List routers (1 op) | 52,550 | 62,600 | **+19.1%** | 58,579 | **+11.5%** |
+| Multi-op (3 ops) | 92,452 | 98,832 | **+6.9%** | 101,155 | **+9.4%** |
+| Show services (1 op) | 69,722 | 69,984 | **+0.4%** | 73,742 | **+5.8%** |
+| Show interfaces (1 op) | 57,168 | 98,661 | **+72.6%** | 74,282 | **+29.9%** |
+| Full workflow (4 ops) | 136,809 | 138,727 | **+1.4%** | 124,024 | **-9.3%** |
+| BGP peer filtering (1 op) | 69,553 | 96,947 | **+39.4%** | 113,635 | **+63.4%** |
+| Config audit (2 ops) | 214,087 | 176,634 | **-17.5%** | 174,417 | **-18.5%** |
+| Multi-command (3 ops) | 108,124 | 122,127 | **+13.0%** | 98,564 | **-8.8%** |
+| Targeted config (1 op) | 33,703 | 67,533 | **+100.4%** | 65,183 | **+93.4%** |
 
 ### Scenario winners
 
-| Scenario | Lowest Turns | Lowest Context | Winner |
-|----------|-------------|----------------|--------|
-| List routers | CLI (5) | CLI (121K) | CLI |
-| Multi-op | MCP (8) | MCP (214K) | MCP |
-| Show services | MCP (12) | MCP (295K) | MCP |
-| Show interfaces | Skill (7) | Skill (187K) | Skill |
-| Full workflow | MCP (15) | MCP (375K) | MCP |
-
-### Phase 2 analysis
-
-**No single approach dominates.** MCP won 3 of 5 scenarios, CLI won 1, and Skill won 1. The results depend heavily on scenario characteristics.
-
-**MCP excels at multi-step structured tasks.** For multi-op (3 tasks), show services, and the full workflow, MCP's typed tool schemas guided the model to complete work in fewer turns. MCP averaged 8-15 turns across these scenarios vs 11-18 for CLI and 9-25 for Skill.
-
-**CLI wins when exact commands are specified.** For list routers — the simplest task where the prompt included the exact command — CLI completed in 5 turns (vs MCP's 7, Skill's 24). When the model knows exactly what to do, the lack of schema overhead and direct Bash execution is most efficient.
-
-**Skill won the composability scenario.** For show interfaces (finding drop counters), Skill averaged just 7 turns and 187K context — the lowest of all approaches. The SKILL.md command reference helped the model compose a targeted `jcli command run` + `grep` pipeline efficiently, beating both MCP (13 turns) and CLI (10 turns).
-
-**Skill had the highest variance overall.** Skill turn ranges were the widest in 3 of 5 scenarios (list routers: 4-46, show services: 14-44, full workflow: 11-33). The SKILL.md context sometimes caused the model to over-explore rather than execute directly, contradicting the hypothesis that richer context would reduce variance.
-
-**The system prompt still dominates context cost.** Each API turn includes ~25K tokens of Claude Code system prompt (mostly via cache). This makes turn count the primary cost driver — a single extra turn costs more than MCP's entire 936-token schema overhead.
-
-**All approaches have significant outliers.** MCP had an 18-turn run in multi-op and a 26-turn run in show interfaces. CLI had a 29-turn outlier in multi-op and a 34-turn outlier in show services. Skill had a 46-turn outlier in list routers and a 44-turn outlier in show services. The variance suggests that 5 runs is insufficient for high-confidence averages, but the directional trends are informative.
-
-## Summary
-
-### Phase 1 (static token analysis)
-
-- **936 tokens** of MCP schema overhead eliminated per session (MCP tool definitions)
-- **SKILL.md** adds a one-time context cost of 2,292 tokens (more than MCP's 936-token schema)
-- **474 tokens** saved across all 6 operations from leaner responses (10.9% per-call reduction) — identical for CLI and Skill
-- **1,410 tokens** total savings in a 6-operation session for CLI (26.7% reduction)
-- Response wrapping and annotations account for the majority of per-call savings
-- Request overhead is roughly equivalent — positional CLI args vs structured JSON is a wash for simple operations
-- Phase 1 deliberately excludes composability scenarios (output filtering, targeted commands) — these depend on LLM behavior and are measured in Phase 2
-
-### Phase 2 (real-world validation, three-way comparison)
-
-- **MCP won 3 of 5 scenarios** (multi-op, show services, full workflow) — structured tool schemas guide multi-step tasks most efficiently
-- **CLI won 1 scenario** (list routers) — direct Bash execution with exact commands is fastest for simple tasks
-- **Skill won 1 scenario** (show interfaces) — SKILL.md helped compose targeted command pipelines for the composability test
-- **Skill had the highest variance** in 3 of 5 scenarios, contradicting the hypothesis that richer context would reduce turn count variance
-- The dominant cost factor remains **number of API turns**, not per-token overhead
-- Each extra turn adds ~25K+ tokens of context (Claude Code's system prompt), making turn consistency the primary cost driver
-- All approaches showed significant run-to-run variance — 5 runs is directionally informative but not statistically robust
-
-### Combined takeaway
-
-Phase 1 and Phase 2 measure different things and reach different conclusions:
-
-1. **Per-token overhead** (Phase 1): CLI is cheapest (zero schema, lean responses), MCP is middle (936-token schema, wrapped responses), Skill is most expensive (2,292-token SKILL.md). CLI saves 1,410 tokens in a 6-operation session (26.7% reduction vs MCP).
-
-2. **Real-world efficiency** (Phase 2): MCP is most efficient for structured multi-step tasks (3 of 5 scenarios). CLI wins for simple direct-command tasks. Skill's advantage is limited to composability scenarios where its command reference helps the model construct targeted pipelines.
-
-3. **Skill hypothesis result**: The skill did not achieve the predicted combination of CLI efficiency and MCP consistency. Instead, it introduced the highest turn variance of all three approaches in most scenarios. The one exception — show interfaces — demonstrates that skills can help with command composition, but this benefit was scenario-specific rather than general.
-
-4. **Turn count is everything.** Phase 1's 474-token per-session savings are negligible compared to the ~25K-token cost of each additional API turn. The approach that minimizes turns wins, regardless of per-token overhead.
-
-The optimal choice depends on the task type: MCP for structured multi-step workflows, CLI for simple direct operations, and potentially Skill for composability-heavy scenarios where the LLM needs to discover and chain commands.
+| Scenario | Lowest Avg Turns | Lowest Avg Context | Winner |
+|----------|-----------------|-------------------|--------|
+| List routers (1 op) | MCP (5) | MCP (52,550) | MCP |
+| Multi-op (3 ops) | MCP (7) | MCP (92,452) | MCP |
+| Show services (1 op) | MCP (5) | MCP (69,722) | MCP |
+| Show interfaces (1 op) | MCP (5) | MCP (57,168) | MCP |
+| Full workflow (4 ops) | CLI (9) | Skill (124,024) | Skill |
+| BGP peer filtering (1 op) | MCP (5) | MCP (69,553) | MCP |
+| Config audit (2 ops) | CLI (11) | Skill (174,417) | Skill |
+| Multi-command (3 ops) | MCP (7) | Skill (98,564) | Skill |
+| Targeted config (1 op) | MCP (3) | MCP (33,703) | MCP |

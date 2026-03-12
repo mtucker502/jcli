@@ -186,6 +186,22 @@ for i in $(seq 1 "$RUNS"); do
     run_skill "bgp_peers" "$i" \
         "Show BGP peers on vsrx1 and identify any not in Established state"
 
+    echo "--- Scenario 8: Multi-command ---"
+    run_mcp "multi_cmd" "$i" \
+        "Run 'show version', 'show bgp summary', and 'show interfaces terse' on vsrx1"
+    run_cli "multi_cmd" "$i" \
+        "Run 'show version', 'show bgp summary', and 'show interfaces terse' on vsrx1"
+    run_skill "multi_cmd" "$i" \
+        "Run 'show version', 'show bgp summary', and 'show interfaces terse' on vsrx1"
+
+    echo "--- Scenario 9: Targeted config ---"
+    run_mcp "config_section" "$i" \
+        "Show me the system services configuration on vsrx1 in set format"
+    run_cli "config_section" "$i" \
+        "Show me the system services configuration on vsrx1 in set format"
+    run_skill "config_section" "$i" \
+        "Show me the system services configuration on vsrx1 in set format"
+
     echo "--- Scenario 7: Multi-section config audit ---"
     run_mcp "config_audit" "$i" \
         "Show just the firewall filter rules and SNMP community configuration on vsrx1"
@@ -203,6 +219,34 @@ echo "  Parsing JSONL session data..."
 echo "============================================="
 
 python3 "$SCRIPT_DIR/parse_results.py" "$RESULTS_DIR_ABS" --runs "$RUNS"
+
+# --- Generate markdown results ---
+BENCHMARK_RESULTS="$REPO_DIR/docs/benchmark_results.md"
+echo ""
+echo "============================================="
+echo "  Generating markdown results..."
+echo "============================================="
+
+# Preserve Phase 1 content from existing results file
+PHASE1_END_MARKER="## Results (Phase 2: Real-World Validation)"
+if [[ -f "$BENCHMARK_RESULTS" ]]; then
+    # Extract everything before Phase 2
+    PHASE1_CONTENT=$(sed -n "1,/^${PHASE1_END_MARKER}/{ /^${PHASE1_END_MARKER}/!p; }" "$BENCHMARK_RESULTS")
+else
+    PHASE1_CONTENT="# Token Efficiency Benchmark Results
+
+Results from the [benchmark methodology](benchmark.md). Three approaches compared: jmcp (MCP), jcli (CLI, no skill), and jcli + Skill (CLI with SKILL.md).
+
+"
+fi
+
+# Write Phase 1 + new Phase 2
+{
+    echo "$PHASE1_CONTENT"
+    python3 "$SCRIPT_DIR/parse_results.py" "$RESULTS_DIR_ABS" --runs "$RUNS" --markdown 2>/dev/null | grep -v "^Results written to:"
+} > "$BENCHMARK_RESULTS"
+
+echo "Markdown results written to: $BENCHMARK_RESULTS"
 
 echo ""
 echo "Raw JSONL data preserved in: $RESULTS_DIR/"

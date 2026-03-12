@@ -35,8 +35,46 @@ class JunosConnection:
         except ConnectError as ce:
             raise ConnectionError(f"Connection error to {self.router_name}: {ce}") from ce
 
-    def get_config(self) -> str:
-        """Get full config in set format."""
+    def run_commands(self, commands: list[str], stop_on_error: bool = False) -> list[dict]:
+        """Execute multiple CLI commands on one connection.
+
+        Returns list of dicts with command, output, status, and duration.
+        """
+        results = []
+        try:
+            with Device(**prepare_connection_params(self.device_info, self.router_name)) as dev:
+                dev.timeout = self.timeout
+                for cmd in commands:
+                    start = time.time()
+                    try:
+                        output = dev.cli(cmd, warning=False)
+                        results.append({
+                            "command": cmd,
+                            "output": output,
+                            "status": "success",
+                            "duration": round(time.time() - start, 3),
+                        })
+                    except Exception as e:
+                        results.append({
+                            "command": cmd,
+                            "output": str(e),
+                            "status": "failed",
+                            "duration": round(time.time() - start, 3),
+                        })
+                        if stop_on_error:
+                            break
+        except ConnectError as ce:
+            raise ConnectionError(f"Connection error to {self.router_name}: {ce}") from ce
+        return results
+
+    def get_config(self, section: str | None = None) -> str:
+        """Get config in set format, optionally filtered to a section."""
+        if section:
+            cmd = (
+                f"show configuration {section}"
+                " | display inheritance no-comments | display set | no-more"
+            )
+            return self.run_command(cmd)
         return self.run_command(
             "show configuration | display inheritance no-comments | display set | no-more"
         )

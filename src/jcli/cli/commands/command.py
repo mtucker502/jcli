@@ -9,6 +9,7 @@ import click
 from jcli.output.formatter import (
     format_command_result,
     format_batch_results,
+    format_multi_results,
     output_error,
     click_echo,
 )
@@ -53,6 +54,44 @@ def run(ctx, router, cmd, timeout):
         sys.exit(1)
     duration = round(time.time() - start, 3)
     click_echo(format_command_result(router, cmd, result, duration, ctx.json_output))
+
+
+@command.command()
+@click.argument("router")
+@click.argument("cmds", nargs=-1, required=True)
+@click.option("--timeout", "-t", type=int, default=None, help="Command timeout in seconds.")
+@click.option("--stop-on-error", is_flag=True, help="Stop on first command failure.")
+@click.pass_obj
+def multi(ctx, router, cmds, timeout, stop_on_error):
+    """Run multiple commands on ROUTER in a single connection.
+
+    Example: jcli command multi vsrx1 "show version" "show bgp summary" "show interfaces terse"
+    """
+    from jcli.device.connection import JunosConnection
+    from jcli.safety.blocklist import check_command_blocklist
+
+    # Pre-check all commands against blocklist before executing any
+    for cmd in cmds:
+        is_blocked, blocked_msg = check_command_blocklist(cmd)
+        if is_blocked:
+            output_error(blocked_msg, ctx.json_output)
+            sys.exit(2)
+
+    timeout = timeout or ctx.timeout
+    try:
+        device_info = ctx.inventory.get_device(router)
+    except KeyError as e:
+        output_error(str(e), ctx.json_output)
+        sys.exit(1)
+
+    try:
+        conn = JunosConnection(device_info, router, timeout)
+        results = conn.run_commands(list(cmds), stop_on_error=stop_on_error)
+    except Exception as e:
+        output_error(str(e), ctx.json_output)
+        sys.exit(1)
+
+    click_echo(format_multi_results(router, results, ctx.json_output))
 
 
 @command.command()

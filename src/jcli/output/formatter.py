@@ -51,6 +51,21 @@ def format_batch_results(results, json_mode=False):
     return "\n".join(lines)
 
 
+def format_multi_results(router, results, json_mode=False):
+    if json_mode:
+        return json.dumps(
+            {"router": router, "results": results},
+            indent=2,
+            default=_json_serializer,
+        )
+    lines = []
+    for r in results:
+        lines.append(f"=== {r['command']} ===")
+        lines.append(r["output"])
+        lines.append("")
+    return "\n".join(lines)
+
+
 def format_device_list(routers, json_mode=False):
     if json_mode:
         return json.dumps({"routers": routers}, indent=2)

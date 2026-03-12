@@ -7,6 +7,7 @@ from jcli.output.formatter import (
     format_facts,
     format_command_result,
     format_batch_results,
+    format_multi_results,
 )
 
 
@@ -92,6 +93,33 @@ class TestFormatCommandResult:
             "r1", "show version", "output", duration=0.5, json_mode=False
         )
         assert result == "output"
+
+
+class TestFormatMultiResults:
+    def test_text_mode(self):
+        results = [
+            {"command": "show version", "output": "Junos: 22.1",
+             "status": "success", "duration": 0.5},
+            {"command": "show bgp summary", "output": "bgp output",
+             "status": "success", "duration": 0.3},
+        ]
+        result = format_multi_results("r1", results, json_mode=False)
+        assert "=== show version ===" in result
+        assert "Junos: 22.1" in result
+        assert "=== show bgp summary ===" in result
+        assert "bgp output" in result
+
+    def test_json_mode(self):
+        results = [
+            {"command": "show version", "output": "v1", "status": "success", "duration": 0.5},
+            {"command": "show bgp", "output": "err", "status": "failed", "duration": 1.0},
+        ]
+        result = format_multi_results("r1", results, json_mode=True)
+        parsed = json.loads(result)
+        assert parsed["router"] == "r1"
+        assert len(parsed["results"]) == 2
+        assert parsed["results"][0]["command"] == "show version"
+        assert parsed["results"][1]["status"] == "failed"
 
 
 class TestFormatBatchResults:

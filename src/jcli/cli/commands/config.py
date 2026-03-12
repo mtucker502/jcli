@@ -15,9 +15,13 @@ def config():
 
 @config.command()
 @click.argument("router")
+@click.argument("section", required=False, default=None)
 @click.pass_obj
-def show(ctx, router):
-    """Show full running configuration of ROUTER in set format."""
+def show(ctx, router, section):
+    """Show running configuration of ROUTER in set format.
+
+    Optionally filter to a SECTION (e.g. "system services", "protocols bgp").
+    """
     from jcli.device.connection import JunosConnection
 
     try:
@@ -27,7 +31,7 @@ def show(ctx, router):
         sys.exit(1)
     try:
         conn = JunosConnection(device_info, router, ctx.timeout)
-        result = conn.get_config()
+        result = conn.get_config(section=section)
     except Exception as e:
         output_error(str(e), ctx.json_output)
         sys.exit(1)

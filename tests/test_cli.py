@@ -191,6 +191,36 @@ class TestDeviceReload:
         assert "Reloaded" in result.output
 
 
+class TestCommandMulti:
+    def test_help(self, runner):
+        result = runner.invoke(cli, ["command", "multi", "--help"])
+        assert result.exit_code == 0
+        assert "ROUTER" in result.output
+        assert "CMDS" in result.output
+
+    def test_no_commands_error(self, runner, inventory_file):
+        result = runner.invoke(cli, ["-f", inventory_file, "command", "multi", "router1"])
+        assert result.exit_code != 0
+
+    def test_blocked_command_exits_2(self, runner, inventory_file, monkeypatch):
+        monkeypatch.setattr(
+            "jcli.safety.blocklist.check_command_blocklist",
+            lambda cmd: (True, f"Blocked: {cmd}") if "reboot" in cmd else (False, ""),
+        )
+        result = runner.invoke(cli, [
+            "-f", inventory_file, "command", "multi", "router1",
+            "show version", "request system reboot",
+        ])
+        assert result.exit_code == 2
+
+
+class TestConfigShowSection:
+    def test_help_shows_section(self, runner):
+        result = runner.invoke(cli, ["config", "show", "--help"])
+        assert result.exit_code == 0
+        assert "SECTION" in result.output
+
+
 class TestConfigTemplate:
     def test_template_render_only(self, runner, inventory_file, template_file, vars_file):
         """Render without --apply should just print the rendered output."""

@@ -22,6 +22,8 @@ SCENARIOS = [
     "full_workflow",
     "bgp_peers",
     "config_audit",
+    "multi_cmd",
+    "config_section",
 ]
 
 APPROACHES = ["mcp", "cli", "skill"]
@@ -34,6 +36,8 @@ SCENARIO_NAMES = {
     "full_workflow": "Full workflow (4 ops)",
     "bgp_peers": "BGP peer filtering (1 op)",
     "config_audit": "Config audit (2 ops)",
+    "multi_cmd": "Multi-command (3 ops)",
+    "config_section": "Targeted config (1 op)",
 }
 
 APPROACH_NAMES = {
@@ -124,14 +128,26 @@ def aggregate(results_dir: Path, runs: int) -> dict:
                     usage = parse_jsonl(config_dir)
                     run_results.append(usage)
 
-            if run_results:
+            # Filter out failed runs (0 context tokens = rate limited or empty)
+            valid_results = [
+                r for r in run_results if r.get("context_tokens", 0) > 0
+            ]
+            if valid_results:
                 avg = {}
-                for key in run_results[0]:
-                    values = [r[key] for r in run_results]
+                mins = {}
+                maxs = {}
+                for key in valid_results[0]:
+                    values = [r[key] for r in valid_results]
                     avg[key] = sum(values) // len(values)
+                    mins[key] = min(values)
+                    maxs[key] = max(values)
                 data["scenarios"][scenario][approach] = {
-                    "runs": run_results,
+                    "runs": valid_results,
+                    "valid_runs": len(valid_results),
+                    "total_runs": len(run_results),
                     "average": avg,
+                    "min": mins,
+                    "max": maxs,
                 }
             else:
                 data["scenarios"][scenario][approach] = {
@@ -188,15 +204,32 @@ def print_markdown(data: dict):
     model = data.get("model", "unknown")
     runs = data.get("runs_per_scenario", "?")
 
+    # Determine actual valid run counts
+    valid_counts = set()
+    for scenario in SCENARIOS:
+        sdata = data["scenarios"].get(scenario, {})
+        for approach in APPROACHES:
+            adata = sdata.get(approach, {})
+            vr = adata.get("valid_runs")
+            if vr is not None:
+                valid_counts.add(vr)
+
+    if len(valid_counts) == 1:
+        valid_str = f"{valid_counts.pop()} valid"
+    elif valid_counts:
+        valid_str = f"{min(valid_counts)}-{max(valid_counts)} valid"
+    else:
+        valid_str = str(runs)
+
     print("## Results (Phase 2: Real-World Validation)\n")
     print(
         f"Phase 2 ran Claude Code (`claude -p`) with {model} against a live "
         f"vsrx1 device, comparing three approaches: jmcp via MCP, jcli via Bash "
         f"(no skill), and jcli via Bash with the SKILL.md skill installed. "
         f"Each scenario was run {runs} times per approach "
-        f"to account for natural variance in model behavior. Token usage was "
-        f"extracted from raw JSONL session data via `CLAUDE_CONFIG_DIR` "
-        f"isolation.\n"
+        f"({valid_str} runs after filtering rate-limited/empty sessions). "
+        f"Token usage was extracted from raw JSONL session data via "
+        f"`CLAUDE_CONFIG_DIR` isolation.\n"
     )
 
     # Determine which approaches have data
@@ -210,30 +243,44 @@ def print_markdown(data: dict):
         if has_data:
             active_approaches.append(approach)
 
-    # --- Averaged results table ---
-    print("### Averaged results\n")
+    # --- Detailed statistics table ---
+    print("### Detailed statistics (min / avg / max)\n")
     print(
-        "The table shows total context tokens "
-        "(input + cache creation + cache read), output tokens, "
-        "and average API turns.\n"
+        "Each cell shows min / avg / max across all runs. "
+        "Context = input + cache creation + cache read tokens.\n"
     )
-    print("| Scenario | Approach | Avg Turns | Avg Context | Avg Output |")
-    print("|----------|----------|-----------|-------------|------------|")
+    print(
+        "| Scenario | Approach | Turns | Context | Output |"
+    )
+    print(
+        "|----------|----------|-------|---------|--------|"
+    )
 
     for scenario in SCENARIOS:
         sdata = data["scenarios"].get(scenario, {})
         name = SCENARIO_NAMES.get(scenario, scenario)
         for approach in active_approaches:
-            avg = sdata.get(approach, {}).get("average", {})
+            adata = sdata.get(approach, {})
+            avg = adata.get("average", {})
+            mins = adata.get("min", {})
+            maxs = adata.get("max", {})
             if not avg or avg.get("num_turns", 0) == 0:
                 continue
             label = name if approach == active_approaches[0] else ""
-            turns = avg.get("num_turns", 0)
-            context = avg.get("context_tokens", 0)
-            output = avg.get("output_tokens", 0)
+            t_min = mins.get("num_turns", 0)
+            t_avg = avg.get("num_turns", 0)
+            t_max = maxs.get("num_turns", 0)
+            c_min = mins.get("context_tokens", 0)
+            c_avg = avg.get("context_tokens", 0)
+            c_max = maxs.get("context_tokens", 0)
+            o_min = mins.get("output_tokens", 0)
+            o_avg = avg.get("output_tokens", 0)
+            o_max = maxs.get("output_tokens", 0)
             print(
                 f"| {label} | {APPROACH_NAMES[approach]} | "
-                f"{turns} | {context:,} | {output:,} |"
+                f"{t_min} / {t_avg} / {t_max} | "
+                f"{c_min:,} / {c_avg:,} / {c_max:,} | "
+                f"{o_min:,} / {o_avg:,} / {o_max:,} |"
             )
 
     # --- Context comparison table ---
@@ -266,31 +313,43 @@ def print_markdown(data: dict):
             row += f" {ctx:,} | {delta} |"
         print(row)
 
-    # --- Per-run variance table ---
-    print("\n### Per-run variance\n")
-    print(
-        "The averages mask significant run-to-run variance. "
-        "The table below shows the range of turns and context "
-        "tokens across all runs per scenario.\n"
-    )
-    print("| Scenario | Approach | Turn Range | Context Range |")
-    print("|----------|----------|------------|---------------|")
+    # --- Scenario winners table ---
+    print("\n### Scenario winners\n")
+    print("| Scenario | Lowest Avg Turns | Lowest Avg Context | Winner |")
+    print("|----------|-----------------|-------------------|--------|")
 
     for scenario in SCENARIOS:
         sdata = data["scenarios"].get(scenario, {})
         name = SCENARIO_NAMES.get(scenario, scenario)
+        best_turns_approach = None
+        best_turns = float("inf")
+        best_ctx_approach = None
+        best_ctx = float("inf")
         for approach in active_approaches:
-            run_data = sdata.get(approach, {}).get("runs", [])
-            if not run_data:
+            avg = sdata.get(approach, {}).get("average", {})
+            if not avg or avg.get("num_turns", 0) == 0:
                 continue
-            turns = [r["num_turns"] for r in run_data]
-            contexts = [r["context_tokens"] for r in run_data]
-            label = name if approach == active_approaches[0] else ""
-            print(
-                f"| {label} | {APPROACH_NAMES[approach]} | "
-                f"{min(turns)}-{max(turns)} | "
-                f"{min(contexts):,} - {max(contexts):,} |"
-            )
+            turns = avg.get("num_turns", 0)
+            ctx = avg.get("context_tokens", 0)
+            if turns < best_turns:
+                best_turns = turns
+                best_turns_approach = approach
+            if ctx < best_ctx:
+                best_ctx = ctx
+                best_ctx_approach = approach
+        turns_label = (
+            f"{APPROACH_NAMES[best_turns_approach]} ({best_turns})"
+            if best_turns_approach
+            else "N/A"
+        )
+        ctx_label = (
+            f"{APPROACH_NAMES[best_ctx_approach]} ({best_ctx:,})"
+            if best_ctx_approach
+            else "N/A"
+        )
+        # Winner is the approach with lowest context (primary cost driver)
+        winner = APPROACH_NAMES.get(best_ctx_approach, "N/A")
+        print(f"| {name} | {turns_label} | {ctx_label} | {winner} |")
 
 
 def main():
