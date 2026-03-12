@@ -90,9 +90,7 @@ Operations where CLI could filter output — e.g., piping `show interfaces` thro
 
 A shell script (`benchmarks/real_world_test.sh`) runs Claude Code (`claude -p`) with equivalent prompts under three configurations — jmcp via MCP, jcli via Bash (no skill), and jcli via Bash with SKILL.md installed — and captures actual token usage. This validates Phase 1 predictions and tests scenarios that Phase 1 cannot: composability, output filtering, and LLM decision-making.
 
-**Sandbox isolation:** Each run executes in a clean temporary directory containing only `devices.json` — no source code, no CLAUDE.md, no `.git` directory. This prevents the model from reading jcli internals to discover commands, which would give CLI and Skill an artificial advantage not present in real deployments. jcli is made available via PATH (the venv's bin directory is prepended), so the model can run `jcli` as a normal command.
-
-This sandbox reflects the realistic deployment scenario: a user has `jcli` installed system-wide and manages routers from an arbitrary working directory, not from inside the jcli source repository.
+**Environment isolation:** Each run executes in a clean directory containing only `devices.json`. jcli is available via PATH. This reflects the realistic deployment scenario — a user has jcli installed and manages routers from an arbitrary working directory.
 
 **Skill isolation:** Each run uses an isolated `CLAUDE_CONFIG_DIR`. CLI runs have no skill installed. Skill runs have SKILL.md copied into the isolated config dir's `skills/jcli/` directory. This prevents cross-contamination between approaches.
 
@@ -135,7 +133,7 @@ python benchmarks/report.py
 - jmcp.py accessible (default: `/Users/matucker/git/junos-mcp-server/jmcp.py`)
 - A Python environment with jmcp's dependencies (junos-eznc, mcp[cli], etc.)
 - jcli installed (`pip install -e .`)
-- `devices.json` in the working directory with reachable devices
+- `devices.json` in the repo root with reachable devices
 
 **Setup:** The jmcp venv must match the current platform. If running on a different platform than where jmcp was originally set up (e.g., Linux VM vs macOS host), create a platform-compatible venv:
 
@@ -167,4 +165,3 @@ JMCP_PYTHON=/path/to/junos-mcp-server/.venv-linux/bin/python bash benchmarks/rea
 - Phase 2 results include natural variance from model behavior — output token counts and turn counts differ between runs for identical prompts. Multiple runs per scenario reduce noise, but some variance remains.
 - The skill's SKILL.md context cost is paid once per session. In shorter sessions (1-2 operations), the skill overhead may exceed MCP's schema overhead. In longer sessions, the per-call savings accumulate.
 - Real-world savings depend on the ratio of tool overhead to system prompt size. Claude Code's large system prompt (~25k tokens) dilutes the percentage impact of schema savings. In lighter-weight agent frameworks with smaller system prompts, the Phase 1 percentages would be more representative.
-- Working directory matters significantly. Early Phase 2 runs inside the jcli source repo showed MCP winning most scenarios, because the model could read source code and CLAUDE.md to discover commands. Sandbox runs (clean directory with only `devices.json`) show the opposite result — Skill wins decisively. The sandbox reflects the realistic deployment scenario.

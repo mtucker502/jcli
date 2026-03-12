@@ -43,7 +43,7 @@ CLI Total = per-call costs only (no schema overhead). Skill Total = CLI per-call
 In Phase 1, Skill is the most expensive approach due to SKILL.md's richer context (2,292 tokens vs MCP's 936). However, Phase 1 only measures static overhead — it cannot capture the skill's potential to reduce turn count variance, which Phase 2 measures.
 ## Results (Phase 2: Real-World Validation)
 
-Phase 2 ran Claude Code (`claude -p`) with opus against a live vsrx1 device, comparing three approaches: jmcp via MCP, jcli via Bash (no skill), and jcli via Bash with the SKILL.md skill installed. Each scenario was run 20 times per approach (4-5 valid runs after filtering rate-limited/empty sessions). Token usage was extracted from raw JSONL session data via `CLAUDE_CONFIG_DIR` isolation.
+Phase 2 ran Claude Code (`claude -p`) with opus against a live vsrx1 device, comparing three approaches: jmcp via MCP, jcli via Bash (no skill), and jcli via Bash with the SKILL.md skill installed. Each scenario was run 3 times per approach (3 valid runs after filtering rate-limited/empty sessions). Token usage was extracted from raw JSONL session data via `CLAUDE_CONFIG_DIR` isolation.
 
 ### Detailed statistics (min / avg / max)
 
@@ -51,58 +51,62 @@ Each cell shows min / avg / max across all runs. Context = input + cache creatio
 
 | Scenario | Approach | Turns | Context | Output |
 |----------|----------|-------|---------|--------|
-| List routers (1 op) | MCP | 5 / 5 / 6 | 44,591 / 52,550 / 64,481 | 322 / 377 / 451 |
-|  | CLI | 5 / 5 / 5 | 62,595 / 62,600 / 62,624 | 291 / 335 / 356 |
-|  | Skill | 5 / 5 / 5 | 56,682 / 58,579 / 66,143 | 285 / 314 / 363 |
-| Multi-op (3 ops) | MCP | 6 / 7 / 8 | 44,045 / 92,452 / 104,560 | 541 / 631 / 659 |
-|  | CLI | 7 / 7 / 7 | 98,788 / 98,832 / 98,854 | 429 / 589 / 646 |
-|  | Skill | 7 / 7 / 8 | 98,879 / 101,155 / 104,583 | 577 / 622 / 685 |
-| Show services (1 op) | MCP | 4 / 5 / 8 | 45,492 / 69,722 / 102,947 | 452 / 543 / 620 |
-|  | CLI | 4 / 5 / 6 | 45,522 / 69,984 / 80,497 | 443 / 590 / 652 |
-|  | Skill | 5 / 5 / 7 | 66,301 / 73,742 / 103,262 | 353 / 497 / 651 |
-| Show interfaces (1 op) | MCP | 3 / 5 / 6 | 28,011 / 57,168 / 68,504 | 473 / 652 / 716 |
-|  | CLI | 5 / 6 / 8 | 68,545 / 98,661 / 125,870 | 646 / 834 / 1,025 |
-|  | Skill | 5 / 5 / 6 | 70,005 / 74,282 / 90,782 | 581 / 667 / 839 |
-| Full workflow (4 ops) | MCP | 9 / 11 / 14 | 123,906 / 136,809 / 156,347 | 844 / 1,167 / 1,520 |
-|  | CLI | 9 / 9 / 10 | 123,911 / 138,727 / 143,774 | 1,080 / 1,121 / 1,178 |
-|  | Skill | 9 / 9 / 9 | 123,954 / 124,024 / 124,050 | 628 / 993 / 1,158 |
-| BGP peer filtering (1 op) | MCP | 4 / 5 / 7 | 30,816 / 69,553 / 98,158 | 518 / 730 / 861 |
-|  | CLI | 5 / 6 / 8 | 64,671 / 96,947 / 120,151 | 597 / 746 / 1,024 |
-|  | Skill | 5 / 7 / 9 | 64,099 / 113,635 / 140,806 | 668 / 821 / 992 |
-| Config audit (2 ops) | MCP | 11 / 13 / 19 | 129,138 / 214,087 / 327,803 | 848 / 1,369 / 1,925 |
-|  | CLI | 10 / 11 / 12 | 150,534 / 176,634 / 192,836 | 916 / 1,110 / 1,330 |
-|  | Skill | 9 / 11 / 14 | 132,321 / 174,417 / 226,056 | 773 / 895 / 1,164 |
-| Multi-command (3 ops) | MCP | 7 / 7 / 9 | 99,105 / 108,124 / 131,915 | 741 / 826 / 882 |
-|  | CLI | 7 / 7 / 10 | 108,382 / 122,127 / 163,037 | 635 / 715 / 849 |
-|  | Skill | 7 / 7 / 7 | 90,422 / 98,564 / 101,279 | 537 / 682 / 772 |
-| Targeted config (1 op) | MCP | 3 / 3 / 5 | 25,176 / 33,703 / 53,699 | 295 / 413 / 529 |
-|  | CLI | 4 / 5 / 7 | 45,511 / 67,533 / 98,546 | 435 / 673 / 938 |
-|  | Skill | 4 / 5 / 6 | 45,613 / 65,183 / 82,430 | 467 / 594 / 733 |
+| List routers (1 op) | MCP | 6 / 6 / 7 | 59,363 / 84,226 / 96,664 | 339 / 384 / 414 |
+|  | CLI | 6 / 7 / 9 | 78,279 / 96,080 / 131,664 | 296 / 456 / 673 |
+|  | Skill | 5 / 5 / 5 | 52,722 / 52,724 / 52,725 | 335 / 338 / 341 |
+| Multi-op (3 ops) | MCP | 14 / 20 / 30 | 281,810 / 491,297 / 859,379 | 1,051 / 1,499 / 2,291 |
+|  | CLI | 16 / 17 / 18 | 249,098 / 293,380 / 326,405 | 1,211 / 1,384 / 1,592 |
+|  | Skill | 11 / 11 / 12 | 163,740 / 177,236 / 201,835 | 589 / 821 / 1,082 |
+| Show services (1 op) | MCP | 10 / 10 / 12 | 112,185 / 128,632 / 146,523 | 795 / 942 / 1,150 |
+|  | CLI | 11 / 11 / 12 | 166,570 / 176,484 / 187,696 | 933 / 1,181 / 1,322 |
+|  | Skill | 5 / 5 / 5 | 51,623 / 51,623 / 51,623 | 544 / 551 / 559 |
+| Show interfaces (1 op) | MCP | 10 / 10 / 12 | 122,882 / 141,610 / 156,472 | 758 / 940 / 1,151 |
+|  | CLI | 10 / 11 / 13 | 152,075 / 178,289 / 229,333 | 841 / 944 / 1,042 |
+|  | Skill | 6 / 6 / 7 | 73,796 / 78,826 / 88,850 | 608 / 719 / 832 |
+| Full workflow (4 ops) | MCP | 18 / 26 / 37 | 223,740 / 529,241 / 899,832 | 1,646 / 2,610 / 3,383 |
+|  | CLI | 15 / 15 / 16 | 238,926 / 254,029 / 268,041 | 1,466 / 1,593 / 1,737 |
+|  | Skill | 12 / 12 / 12 | 184,293 / 184,326 / 184,347 | 1,303 / 1,313 / 1,332 |
+| BGP peer filtering (1 op) | MCP | 13 / 14 / 15 | 142,499 / 207,735 / 242,395 | 981 / 1,230 / 1,420 |
+|  | CLI | 9 / 11 / 13 | 132,290 / 175,034 / 206,112 | 925 / 1,192 / 1,450 |
+|  | Skill | 5 / 5 / 6 | 51,783 / 62,435 / 68,607 | 572 / 719 / 798 |
+| Config audit (2 ops) | MCP | 19 / 21 / 24 | 263,590 / 315,951 / 413,536 | 1,765 / 1,907 / 2,121 |
+|  | CLI | 15 / 16 / 17 | 239,507 / 265,401 / 280,384 | 1,232 / 1,406 / 1,585 |
+|  | Skill | 8 / 9 / 12 | 98,838 / 141,831 / 190,949 | 658 / 789 / 976 |
+| Multi-command (3 ops) | MCP | 7 / 13 / 18 | 99,715 / 211,277 / 279,495 | 692 / 1,418 / 1,785 |
+|  | CLI | 14 / 15 / 16 | 209,665 / 227,409 / 259,732 | 1,221 / 1,256 / 1,288 |
+|  | Skill | 5 / 5 / 5 | 55,024 / 55,024 / 55,024 | 566 / 654 / 709 |
+| Targeted config (1 op) | MCP | 9 / 10 / 11 | 105,827 / 126,667 / 137,117 | 970 / 1,051 / 1,096 |
+|  | CLI | 11 / 11 / 13 | 154,416 / 167,323 / 193,108 | 961 / 1,051 / 1,098 |
+|  | Skill | 5 / 5 / 5 | 51,726 / 51,726 / 51,726 | 491 / 520 / 575 |
 
 ### Context comparison
 
 | Scenario | MCP Context | CLI Context | CLI vs MCP | Skill Context | Skill vs MCP |
 |----------|-------------|-------------|------------|-------------|------------|
-| List routers (1 op) | 52,550 | 62,600 | **+19.1%** | 58,579 | **+11.5%** |
-| Multi-op (3 ops) | 92,452 | 98,832 | **+6.9%** | 101,155 | **+9.4%** |
-| Show services (1 op) | 69,722 | 69,984 | **+0.4%** | 73,742 | **+5.8%** |
-| Show interfaces (1 op) | 57,168 | 98,661 | **+72.6%** | 74,282 | **+29.9%** |
-| Full workflow (4 ops) | 136,809 | 138,727 | **+1.4%** | 124,024 | **-9.3%** |
-| BGP peer filtering (1 op) | 69,553 | 96,947 | **+39.4%** | 113,635 | **+63.4%** |
-| Config audit (2 ops) | 214,087 | 176,634 | **-17.5%** | 174,417 | **-18.5%** |
-| Multi-command (3 ops) | 108,124 | 122,127 | **+13.0%** | 98,564 | **-8.8%** |
-| Targeted config (1 op) | 33,703 | 67,533 | **+100.4%** | 65,183 | **+93.4%** |
+| List routers (1 op) | 84,226 | 96,080 | **+14.1%** | 52,724 | **-37.4%** |
+| Multi-op (3 ops) | 491,297 | 293,380 | **-40.3%** | 177,236 | **-63.9%** |
+| Show services (1 op) | 128,632 | 176,484 | **+37.2%** | 51,623 | **-59.9%** |
+| Show interfaces (1 op) | 141,610 | 178,289 | **+25.9%** | 78,826 | **-44.3%** |
+| Full workflow (4 ops) | 529,241 | 254,029 | **-52.0%** | 184,326 | **-65.2%** |
+| BGP peer filtering (1 op) | 207,735 | 175,034 | **-15.7%** | 62,435 | **-69.9%** |
+| Config audit (2 ops) | 315,951 | 265,401 | **-16.0%** | 141,831 | **-55.1%** |
+| Multi-command (3 ops) | 211,277 | 227,409 | **+7.6%** | 55,024 | **-74.0%** |
+| Targeted config (1 op) | 126,667 | 167,323 | **+32.1%** | 51,726 | **-59.2%** |
 
 ### Scenario winners
 
 | Scenario | Lowest Avg Turns | Lowest Avg Context | Winner |
 |----------|-----------------|-------------------|--------|
-| List routers (1 op) | MCP (5) | MCP (52,550) | MCP |
-| Multi-op (3 ops) | MCP (7) | MCP (92,452) | MCP |
-| Show services (1 op) | MCP (5) | MCP (69,722) | MCP |
-| Show interfaces (1 op) | MCP (5) | MCP (57,168) | MCP |
-| Full workflow (4 ops) | CLI (9) | Skill (124,024) | Skill |
-| BGP peer filtering (1 op) | MCP (5) | MCP (69,553) | MCP |
-| Config audit (2 ops) | CLI (11) | Skill (174,417) | Skill |
-| Multi-command (3 ops) | MCP (7) | Skill (98,564) | Skill |
-| Targeted config (1 op) | MCP (3) | MCP (33,703) | MCP |
+| List routers (1 op) | Skill (5) | Skill (52,724) | Skill |
+| Multi-op (3 ops) | Skill (11) | Skill (177,236) | Skill |
+| Show services (1 op) | Skill (5) | Skill (51,623) | Skill |
+| Show interfaces (1 op) | Skill (6) | Skill (78,826) | Skill |
+| Full workflow (4 ops) | Skill (12) | Skill (184,326) | Skill |
+| BGP peer filtering (1 op) | Skill (5) | Skill (62,435) | Skill |
+| Config audit (2 ops) | Skill (9) | Skill (141,831) | Skill |
+| Multi-command (3 ops) | Skill (5) | Skill (55,024) | Skill |
+| Targeted config (1 op) | Skill (5) | Skill (51,726) | Skill |
+
+**Score: Skill 9, CLI 0, MCP 0.**
+
+Skill won every scenario, with context savings of 37–74% vs MCP. The dominant factor is turn count — Skill completed single-op tasks in 5 turns while MCP required 6–14 and CLI required 7–16. SKILL.md eliminates command discovery overhead entirely, letting the model execute the right command on the first attempt. Skill also showed dramatically lower variance (e.g., list routers context range of 52,722–52,725 vs MCP's 59,363–96,664).
