@@ -10,6 +10,12 @@
 # account for natural variance in model behavior (output length,
 # turn count, tool selection).
 #
+# Isolation: Each run uses a clean sandbox directory containing only
+# devices.json — no source code, no CLAUDE.md, no .git. This prevents
+# the model from reading jcli internals and ensures all approaches
+# rely only on their own guidance (MCP schemas, SKILL.md, or nothing).
+# jcli is made available via PATH, not the local filesystem.
+#
 # Token usage is measured by isolating each run's CLAUDE_CONFIG_DIR
 # to a local directory, then parsing the raw JSONL session files
 # to extract per-message token counts.
@@ -40,18 +46,39 @@ RUNS="${BENCHMARK_RUNS:-5}"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 SKILL_SRC="$REPO_DIR/skills/SKILL.md"
+JCLI_VENV="$REPO_DIR/.venv"
 TIMESTAMP=$(date +%Y%m%dT%H%M%S)
 RESULTS_DIR="$SCRIPT_DIR/results/${TIMESTAMP}"
 
 mkdir -p "$RESULTS_DIR"
 RESULTS_DIR_ABS="$(cd "$RESULTS_DIR" && pwd)"
 
+# --- Create clean sandbox ---
+# A temp directory with only devices.json — no source code, no CLAUDE.md, no .git.
+# This forces CLI/Skill to rely on PATH (not .venv/bin/jcli) and prevents
+# the model from reading source code to discover commands.
+SANDBOX_DIR=$(mktemp -d)
+cp "$REPO_DIR/devices.json" "$SANDBOX_DIR/devices.json"
+
+cleanup_sandbox() {
+    rm -rf "$SANDBOX_DIR"
+}
+trap cleanup_sandbox EXIT
+
+# Verify jcli is accessible via the venv
+if [[ ! -x "$JCLI_VENV/bin/jcli" ]]; then
+    echo "ERROR: jcli not found at $JCLI_VENV/bin/jcli"
+    echo "Run: pip install -e . in the jcli repo"
+    exit 1
+fi
+
 # Save run metadata
 cat > "$RESULTS_DIR/meta.json" <<EOF
 {
   "timestamp": "$TIMESTAMP",
   "model": "$MODEL",
-  "runs_per_scenario": $RUNS
+  "runs_per_scenario": $RUNS,
+  "sandbox": true
 }
 EOF
 
@@ -78,6 +105,18 @@ seed_config_dir_with_skill() {
     cp "$SKILL_SRC" "$skill_dest/SKILL.md"
 }
 
+# All runs execute in SANDBOX_DIR with jcli on PATH
+run_in_sandbox() {
+    local config_dir="$1"
+    shift
+    (
+        cd "$SANDBOX_DIR"
+        export PATH="$JCLI_VENV/bin:$PATH"
+        export CLAUDE_CONFIG_DIR="$config_dir"
+        "$@"
+    )
+}
+
 run_mcp() {
     local name="$1"
     local run="$2"
@@ -86,7 +125,8 @@ run_mcp() {
     seed_config_dir "$config_dir"
 
     echo "  [MCP]   $name run $run/$RUNS"
-    CLAUDE_CONFIG_DIR="$config_dir" claude -p "$prompt" \
+    run_in_sandbox "$config_dir" \
+        claude -p "$prompt" \
         --mcp-config "{\"mcpServers\":{\"jmcp\":{\"command\":\"$JMCP_PYTHON\",\"args\":[\"$JMCP_PATH\"]}}}" \
         --dangerously-skip-permissions \
         --model "$MODEL" \
@@ -101,7 +141,8 @@ run_cli() {
     seed_config_dir "$config_dir"
 
     echo "  [CLI]   $name run $run/$RUNS"
-    CLAUDE_CONFIG_DIR="$config_dir" claude -p "$prompt" \
+    run_in_sandbox "$config_dir" \
+        claude -p "$prompt" \
         --dangerously-skip-permissions \
         --model "$MODEL" \
         > "$config_dir/output.txt" 2>&1 || true
@@ -115,7 +156,8 @@ run_skill() {
     seed_config_dir_with_skill "$config_dir"
 
     echo "  [Skill] $name run $run/$RUNS"
-    CLAUDE_CONFIG_DIR="$config_dir" claude -p "$prompt" \
+    run_in_sandbox "$config_dir" \
+        claude -p "$prompt" \
         --dangerously-skip-permissions \
         --model "$MODEL" \
         > "$config_dir/output.txt" 2>&1 || true
@@ -128,6 +170,7 @@ echo "  Token Efficiency: Real-World Comparison"
 echo "  Model: $MODEL"
 echo "  Runs per scenario: $RUNS"
 echo "  Results: $RESULTS_DIR/"
+echo "  Sandbox: $SANDBOX_DIR"
 echo "  Approaches: MCP, CLI (no skill), Skill"
 echo "============================================="
 echo ""
@@ -186,7 +229,7 @@ for i in $(seq 1 "$RUNS"); do
     run_skill "bgp_peers" "$i" \
         "Show BGP peers on vsrx1 and identify any not in Established state"
 
-    echo "--- Scenario 8: Multi-command ---"
+    echo "--- Scenario 7: Multi-command ---"
     run_mcp "multi_cmd" "$i" \
         "Run 'show version', 'show bgp summary', and 'show interfaces terse' on vsrx1"
     run_cli "multi_cmd" "$i" \
@@ -194,7 +237,7 @@ for i in $(seq 1 "$RUNS"); do
     run_skill "multi_cmd" "$i" \
         "Run 'show version', 'show bgp summary', and 'show interfaces terse' on vsrx1"
 
-    echo "--- Scenario 9: Targeted config ---"
+    echo "--- Scenario 8: Targeted config ---"
     run_mcp "config_section" "$i" \
         "Show me the system services configuration on vsrx1 in set format"
     run_cli "config_section" "$i" \
@@ -202,7 +245,7 @@ for i in $(seq 1 "$RUNS"); do
     run_skill "config_section" "$i" \
         "Show me the system services configuration on vsrx1 in set format"
 
-    echo "--- Scenario 7: Multi-section config audit ---"
+    echo "--- Scenario 9: Multi-section config audit ---"
     run_mcp "config_audit" "$i" \
         "Show just the firewall filter rules and SNMP community configuration on vsrx1"
     run_cli "config_audit" "$i" \

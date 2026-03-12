@@ -43,5 +43,3 @@ jcli device list|facts|add|reload
 jcli command run|multi|batch
 jcli config show|diff|load|template
 ```
-
-When managing Junos devices, use `jcli` commands directly — do not read source code to discover commands.

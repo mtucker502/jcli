@@ -90,9 +90,13 @@ Operations where CLI could filter output — e.g., piping `show interfaces` thro
 
 A shell script (`benchmarks/real_world_test.sh`) runs Claude Code (`claude -p`) with equivalent prompts under three configurations — jmcp via MCP, jcli via Bash (no skill), and jcli via Bash with SKILL.md installed — and captures actual token usage. This validates Phase 1 predictions and tests scenarios that Phase 1 cannot: composability, output filtering, and LLM decision-making.
 
+**Sandbox isolation:** Each run executes in a clean temporary directory containing only `devices.json` — no source code, no CLAUDE.md, no `.git` directory. This prevents the model from reading jcli internals to discover commands, which would give CLI and Skill an artificial advantage not present in real deployments. jcli is made available via PATH (the venv's bin directory is prepended), so the model can run `jcli` as a normal command.
+
+This sandbox reflects the realistic deployment scenario: a user has `jcli` installed system-wide and manages routers from an arbitrary working directory, not from inside the jcli source repository.
+
 **Skill isolation:** Each run uses an isolated `CLAUDE_CONFIG_DIR`. CLI runs have no skill installed. Skill runs have SKILL.md copied into the isolated config dir's `skills/jcli/` directory. This prevents cross-contamination between approaches.
 
-**Prompt design:** All three approaches use identical natural-language prompts. MCP discovers actions from tool schemas, Skill from SKILL.md context, and CLI must figure it out from available tools and the codebase. This keeps the comparison fair — any behavioral differences come from the approach, not the prompt.
+**Prompt design:** All three approaches use identical natural-language prompts. MCP discovers actions from tool schemas, Skill from SKILL.md context, and CLI must figure it out from available tools. This keeps the comparison fair — any behavioral differences come from the approach, not the prompt.
 
 **Phase 2 scenarios include the Phase 1 operations plus composability tests:**
 
@@ -105,6 +109,8 @@ A shell script (`benchmarks/real_world_test.sh`) runs Claude Code (`claude -p`) 
 | Full workflow (4 tasks) | "Complete workflow: 1) List routers 2) Get facts for vsrx1 3) Run 'show bgp summary' on vsrx1 4) Show the full config of vsrx1" |
 | BGP peer filtering | "Show BGP peers on vsrx1 and identify any not in Established state" |
 | Config audit (2 sections) | "Show just the firewall filter rules and SNMP community configuration on vsrx1" |
+| Multi-command (3 ops) | "Run 'show version', 'show bgp summary', and 'show interfaces terse' on vsrx1" |
+| Targeted config | "Show me the system services configuration on vsrx1 in set format" |
 
 These prompts describe intent without prescribing commands (for MCP and Skill), letting the LLM decide how to get the data. The skill hypothesis is that SKILL.md provides enough guidance for the LLM to use jcli commands correctly with natural-language prompts — combining CLI's per-token efficiency with MCP's behavioral consistency.
 
@@ -158,6 +164,7 @@ JMCP_PYTHON=/path/to/junos-mcp-server/.venv-linux/bin/python bash benchmarks/rea
 
 - Phase 1 token counts use OpenAI's `cl100k_base` encoding as an approximation. Claude uses a different tokenizer, so absolute counts will differ. The relative comparison remains valid.
 - Phase 1 measures only tool interaction overhead. It does not account for system prompts, model reasoning tokens, or retry behavior.
-- Phase 2 results include natural variance from model behavior — output token counts and turn counts differ between runs for identical prompts. Each scenario was run 5 times to reduce noise, but some variance remains.
+- Phase 2 results include natural variance from model behavior — output token counts and turn counts differ between runs for identical prompts. Multiple runs per scenario reduce noise, but some variance remains.
 - The skill's SKILL.md context cost is paid once per session. In shorter sessions (1-2 operations), the skill overhead may exceed MCP's schema overhead. In longer sessions, the per-call savings accumulate.
 - Real-world savings depend on the ratio of tool overhead to system prompt size. Claude Code's large system prompt (~25k tokens) dilutes the percentage impact of schema savings. In lighter-weight agent frameworks with smaller system prompts, the Phase 1 percentages would be more representative.
+- Working directory matters significantly. Early Phase 2 runs inside the jcli source repo showed MCP winning most scenarios, because the model could read source code and CLAUDE.md to discover commands. Sandbox runs (clean directory with only `devices.json`) show the opposite result — Skill wins decisively. The sandbox reflects the realistic deployment scenario.
