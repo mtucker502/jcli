@@ -122,18 +122,24 @@ class TestDeviceAdd:
             devices = json.load(f)
         assert devices["jump_router"]["ssh_config"] == "/home/admin/.ssh/config"
 
-    def test_add_password_auth_without_password_flag(self, runner, inventory_file):
+    def test_add_password_auth_prompts_when_no_flag(self, runner, inventory_file):
         result = runner.invoke(
             cli,
             [
                 "-f", inventory_file,
-                "device", "add", "bad",
+                "device", "add", "prompted_router",
                 "--ip", "10.0.8.1",
                 "--user", "admin",
                 "--auth-type", "password",
             ],
+            input="prompted_pw\n",
         )
-        assert result.exit_code != 0
+        assert result.exit_code == 0
+        assert "Added" in result.output
+        import json
+        with open(inventory_file) as f:
+            devices = json.load(f)
+        assert devices["prompted_router"]["auth"]["password"] == "prompted_pw"
 
     def test_add_ssh_key_auth_without_key_file(self, runner, inventory_file):
         result = runner.invoke(
