@@ -3,6 +3,7 @@
 import copy
 import json
 import logging
+import os
 from pathlib import Path
 
 from jcli.device.config import validate_all_devices, validate_device_config
@@ -30,6 +31,7 @@ class DeviceInventory:
     def save(self) -> None:
         with open(self.path, "w") as f:
             json.dump(self.devices, f, indent=4)
+        os.chmod(self.path, 0o600)
         log.info(f"Saved {len(self.devices)} device(s) to '{self.path}'")
 
     def reload(self, path: str | None = None) -> int:
