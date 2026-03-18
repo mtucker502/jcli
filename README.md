@@ -88,6 +88,8 @@ set system login user ([^ ]+) authentication
 
 Patterns support regex. Lines starting with `#` are comments.
 
+**Note:** Config blocklist patterns (`block.cfg`) match against `set`-format configuration lines only. Configuration loaded with `--format text` or `--format xml` is **not** checked against the blocklist. Use `set` format when blocklist enforcement is required.
+
 Example files are provided in `examples/`. Copy them to your working directory and edit as needed:
 
 ```
