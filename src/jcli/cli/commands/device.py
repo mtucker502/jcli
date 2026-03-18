@@ -65,7 +65,10 @@ def facts(ctx, router, timeout):
     "--auth-type", required=True, type=click.Choice(["password", "ssh_key", "ssh_agent"]),
     help="Authentication type.",
 )
-@click.option("--password", default=None, help="Password (for password auth).")
+@click.option(
+    "--password", default=None, hidden=True,
+    help="Password (for password auth). Prefer interactive prompt.",
+)
 @click.option("--key-file", default=None, help="SSH private key path (for ssh_key auth).")
 @click.option("--ssh-config", default=None, help="SSH config file path (for jumphost/proxy).")
 @click.option("--test", "test_conn", is_flag=True, help="Test connectivity after adding.")
@@ -76,8 +79,7 @@ def add(ctx, name, ip, port, user, auth_type, password, key_file, ssh_config, te
     Example: jcli device add lab1 --ip 10.0.1.1 --user admin --auth-type ssh_key --key-file ~/.ssh/id_rsa
     """
     if auth_type == "password" and not password:
-        output_error("--password required when --auth-type is password", ctx.json_output)
-        sys.exit(1)
+        password = click.prompt("Password", hide_input=True)
     if auth_type == "ssh_key" and not key_file:
         output_error("--key-file required when --auth-type is ssh_key", ctx.json_output)
         sys.exit(1)
