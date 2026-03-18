@@ -1,6 +1,6 @@
 # Token Efficiency Benchmark: jmcp vs jcli vs jcli + Skill
 
-jcli was built to replace jmcp (MCP server) for Junos device management, with the explicit goal of reducing token consumption when driven by an LLM. The jcli skill (SKILL.md) gives the LLM knowledge of available commands without requiring MCP's structured tool interface. This benchmark quantifies where savings come from and how the three approaches compare.
+jcli was built to complement jmcp (MCP server) for Junos device management, with the explicit goal of reducing token consumption when driven by an LLM. The jcli skill (SKILL.md) gives the LLM knowledge of available commands without requiring MCP's structured tool interface. This benchmark quantifies where savings come from and how the three approaches compare.
 
 ## Background
 
