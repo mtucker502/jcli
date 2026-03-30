@@ -36,10 +36,10 @@ skills/SKILL.md               # Claude Code skill (install via jcli --install-sk
 - Auth types: `password`, `ssh_key`, `ssh_agent`
 - devices.json format is shared with jmcp (interoperable)
 
-## Commands (10 total)
+## Commands (11 total)
 
 ```
-jcli device list|facts|add|reload
+jcli device list|facts|add|remove|reload
 jcli command run|multi|batch
 jcli config show|diff|load|template
 ```

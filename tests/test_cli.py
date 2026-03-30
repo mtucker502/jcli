@@ -173,6 +173,51 @@ class TestDeviceAdd:
         assert devices["custom_port"]["port"] == 830
 
 
+class TestDeviceRemove:
+    def test_remove_with_force(self, runner, inventory_file):
+        result = runner.invoke(
+            cli, ["-f", inventory_file, "device", "remove", "router1", "--force"]
+        )
+        assert result.exit_code == 0
+        assert "Removed" in result.output
+        assert "router1" in result.output
+
+        with open(inventory_file) as f:
+            devices = json.load(f)
+        assert "router1" not in devices
+        assert "router2" in devices
+
+    def test_remove_with_confirmation_yes(self, runner, inventory_file):
+        result = runner.invoke(
+            cli, ["-f", inventory_file, "device", "remove", "router1"],
+            input="y\n",
+        )
+        assert result.exit_code == 0
+        assert "Removed" in result.output
+
+        with open(inventory_file) as f:
+            devices = json.load(f)
+        assert "router1" not in devices
+
+    def test_remove_with_confirmation_no(self, runner, inventory_file):
+        result = runner.invoke(
+            cli, ["-f", inventory_file, "device", "remove", "router1"],
+            input="n\n",
+        )
+        assert result.exit_code == 0
+        assert "Cancelled" in result.output
+
+        with open(inventory_file) as f:
+            devices = json.load(f)
+        assert "router1" in devices
+
+    def test_remove_nonexistent_device(self, runner, inventory_file):
+        result = runner.invoke(
+            cli, ["-f", inventory_file, "device", "remove", "no_such_router", "--force"]
+        )
+        assert result.exit_code != 0
+
+
 class TestDeviceReload:
     def test_reload_same_file(self, runner, inventory_file):
         result = runner.invoke(cli, ["-f", inventory_file, "device", "reload"])

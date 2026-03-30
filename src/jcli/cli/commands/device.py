@@ -1,4 +1,4 @@
-"""Device management commands: list, facts, add, reload."""
+"""Device management commands: list, facts, add, remove, reload."""
 
 import sys
 
@@ -118,6 +118,36 @@ def add(ctx, name, ip, port, user, auth_type, password, key_file, ssh_config, te
             sys.exit(1)
     else:
         click_echo(f"Added '{name}'")
+
+
+@device.command()
+@click.argument("name")
+@click.option("--force", "-f", is_flag=True, help="Skip confirmation prompt.")
+@click.pass_obj
+def remove(ctx, name, force):
+    """Remove a device from the inventory.
+
+    Example: jcli device remove lab1
+    """
+    try:
+        ctx.inventory.get_device(name)
+    except KeyError as e:
+        output_error(str(e), ctx.json_output)
+        sys.exit(1)
+
+    if not force:
+        if not click.confirm(f"Remove '{name}'?", default=False):
+            click_echo("Cancelled")
+            return
+
+    ctx.inventory.remove_device(name)
+    try:
+        ctx.inventory.save()
+    except OSError as e:
+        output_error(str(e), ctx.json_output)
+        sys.exit(1)
+
+    click_echo(f"Removed '{name}'")
 
 
 @device.command()
