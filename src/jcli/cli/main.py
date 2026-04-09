@@ -67,8 +67,8 @@ class CliContext:
     "-f",
     "inventory_path",
     envvar="JCLI_INVENTORY",
-    default="devices.json",
-    help="Path to devices.json inventory file.",
+    default=None,
+    help="Path to devices.json inventory file. Defaults to ./devices.json or ~/.config/jcli/devices.json.",
 )
 @click.option(
     "--timeout",

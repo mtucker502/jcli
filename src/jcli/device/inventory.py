@@ -13,7 +13,12 @@ log = logging.getLogger(__name__)
 
 class DeviceInventory:
     def __init__(self, path: str | None = None):
-        self.path = Path(path) if path else Path("devices.json")
+        if path:
+            self.path = Path(path)
+        else:
+            cwd_path = Path("devices.json")
+            user_path = Path.home() / ".config" / "jcli" / "devices.json"
+            self.path = cwd_path if cwd_path.exists() else user_path
         self.devices: dict[str, dict] = {}
 
     def load(self) -> None:
